@@ -206,7 +206,7 @@ with col_right:
 st.markdown("---")
 
 # Telemetry Chart
-st.subheader("📈 Ground Truth Moisture vs. Spaceborne NDVI Correlation")
+st.subheader("📈 Ground Truth Soil Moisture vs. Canopy Health")
 
 field_history = df_truth[df_truth["field_id"] == selected_field_id]
 
@@ -223,25 +223,17 @@ if not field_history.empty:
     
     fig.add_trace(go.Scatter(
         x=field_history["date"],
-        y=field_history["scout_vigour"],
-        name="Canopy Health (0-1)",
+        y=field_history["scout_vigour"] * 100,
+        name="Canopy Health Score (0-100%)",
         mode="lines+markers",
-        line=dict(color="#38a169", width=3, dash="dot"),
-        yaxis="y2"
+        line=dict(color="#38a169", width=3, dash="dot")
     ))
     
     fig.update_layout(
         height=320,
         margin=dict(l=20, r=20, t=30, b=20),
-        xaxis=dict(title="Date"),
-        yaxis=dict(title="Soil Moisture (%)", titlefont=dict(color="#3182ce")),
-        yaxis2=dict(
-            title="Crop Vigour Index",
-            titlefont=dict(color="#38a169"),
-            overlaying="y",
-            side="right",
-            range=[0, 1.1]
-        ),
+        xaxis=dict(title="Monitoring Date"),
+        yaxis=dict(title="Percentage / Scale Value (%)"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig, use_container_width=True)
