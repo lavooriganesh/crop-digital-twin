@@ -7,9 +7,7 @@ from streamlit_folium import folium_static
 from PIL import Image, ImageDraw
 import os
 
-# ---------------------------------------------------------
-# PAGE SETUP
-# ---------------------------------------------------------
+# Set page configuration
 st.set_page_config(
     page_title="Crop Digital Twin - Kalaburagi",
     page_icon="🌾",
@@ -18,18 +16,21 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# CACHED FUNCTIONS (Prevents CPU Overuse & Throttling)
+# CACHED DATA & RESOURCE LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
-    """Loads CSV datasets into memory once to avoid CPU thrashing on re-runs."""
-    df_truth = None
-    df_twin = None
-    
+    """Loads CSV datasets checking both root and data/ directories."""
+    # Resolve Ground Truth file path
+    truth_path = None
     if os.path.exists("ground_truth.csv"):
-        df_truth = pd.read_csv("ground_truth.csv")
+        truth_path = "ground_truth.csv"
+    elif os.path.exists("data/ground_truth.csv"):
+        truth_path = "data/ground_truth.csv"
+
+    if truth_path:
+        df_truth = pd.read_csv(truth_path)
     else:
-        # Fallback simulation if file is not found
         df_truth = pd.DataFrame({
             "date": ["2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22"],
             "field_id": ["Field-101", "Field-101", "Field-101", "Field-101"],
@@ -39,10 +40,16 @@ def load_datasets():
             "scout_vigour": [0.85, 0.80, 0.65, 0.52]
         })
 
+    # Resolve Fused Twin file path
+    twin_path = None
     if os.path.exists("fused_digital_twin_data.csv"):
-        df_twin = pd.read_csv("fused_digital_twin_data.csv")
+        twin_path = "fused_digital_twin_data.csv"
+    elif os.path.exists("data/fused_digital_twin_data.csv"):
+        twin_path = "data/fused_digital_twin_data.csv"
+
+    if twin_path:
+        df_twin = pd.read_csv(twin_path)
     else:
-        # Fallback simulation if file is not found
         df_twin = pd.DataFrame({
             "field_id": ["Field-101", "Field-102"],
             "crop": ["Maize", "Wheat"],
@@ -74,10 +81,10 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
         
     # Plant foliage color based on NDVI & moisture
     if moisture_pct < 25:
-        leaf_color = (180, 160, 50)  # Yellow-brown dry stress
+        leaf_color = (180, 160, 50)  # Dehydration stress
         num_leaves = 6
     else:
-        leaf_color = (34, 139, 34)   # Lush green
+        leaf_color = (34, 139, 34)   # Healthy foliage
         num_leaves = 14
 
     for x in range(30, 370, 45):
@@ -91,10 +98,10 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Caches Folium map generation so the map doesn't reload on every click."""
+    """Caches Folium map generation so the map does not reload on every click."""
     m = folium.Map(location=[lat, lon], zoom_start=15, tiles="OpenStreetMap")
     
-    # Add Google Satellite layer
+    # Google Satellite layer
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
         attr='Google Satellite',
@@ -103,7 +110,7 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         control=True
     ).add_to(m)
     
-    # Parcel boundary box
+    # Boundary box
     delta = 0.003
     coords = [
         [lat - delta, lon - delta],
@@ -126,18 +133,18 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     
     folium.Marker(
         [lat, lon],
-        popup=f"{field_name} In-Situ Sensor Node",
+        popup=f"{field_name} Sensor Node",
         icon=folium.Icon(color="red" if moisture < 25 else "green", icon="info-sign")
     ).add_to(m)
     
     return m
 
 # ---------------------------------------------------------
-# MAIN DASHBOARD INTERFACE
+# DASHBOARD INTERFACE
 # ---------------------------------------------------------
 df_truth, df_twin = load_datasets()
 
-# App Title & Context
+# Title
 st.title("🌾 Crop Digital Twin Monitoring System")
 st.caption("Target Region: Kalaburagi, Karnataka | Space-to-Ground Agro-Hydrological Platform")
 
@@ -146,10 +153,10 @@ st.sidebar.header("📍 Select Farmland Parcel")
 field_list = df_twin["field_id"].tolist()
 selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
 
-# Active parcel selection
+# Selected field data
 field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 
-# KPI Metric Cards
+# Metrics
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Field / Crop", f"{field_data['field_id']} ({field_data['crop']})")
@@ -164,7 +171,7 @@ with col3:
 with col4:
     st.metric("Model Reliability", "99.8%", "Calibrated")
 
-# Advisory Alert Banner
+# Alert Banner
 if field_data["twin_alert_level"] == "warning":
     st.error(f"⚠️ **{field_data['twin_status']}**: {field_data['twin_recommendation']}")
 else:
@@ -203,7 +210,7 @@ with col_right:
 
 st.markdown("---")
 
-# Telemetry Time Series Graph
+# Telemetry Chart
 st.subheader("📈 Ground Truth Moisture vs. Spaceborne NDVI Correlation")
 
 field_history = df_truth[df_truth["field_id"] == selected_field_id]
@@ -211,7 +218,6 @@ field_history = df_truth[df_truth["field_id"] == selected_field_id]
 if not field_history.empty:
     fig = go.Figure()
     
-    # Ground Moisture Line
     fig.add_trace(go.Scatter(
         x=field_history["date"],
         y=field_history["soil_moisture_pct"],
@@ -221,7 +227,6 @@ if not field_history.empty:
         yaxis="y1"
     ))
     
-    # Crop Vigour Line
     fig.add_trace(go.Scatter(
         x=field_history["date"],
         y=field_history["scout_vigour"],
@@ -247,9 +252,9 @@ if not field_history.empty:
 else:
     st.info("No historical telemetry time-series logs recorded for this parcel yet.")
 
-# Reference Accordion
+# Reference Link Section
 with st.expander("🔗 Official State Alignment & Research References"):
     st.markdown("""
     * **State Initiative Alignment:** Supports Karnataka Government's AI-based crop monitoring framework for drought-hit regions.
-    * **Agronomic Validation:** Real-time root-zone hydrological monitoring for black cotton agrarian soil in Kalaburagi.
+    * **Validation Focus:** Real-time root-zone hydrological monitoring for black cotton agrarian soil in Kalaburagi.
     """)
