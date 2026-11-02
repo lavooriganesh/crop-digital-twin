@@ -1,0 +1,9 @@
+date,field_id,lat,lon,crop,soil_moisture_pct,scout_vigour,sat_ndvi,twin_status,twin_recommendation,twin_alert_level
+2026-10-01,Field-101,17.215,76.745,Maize,48,0.8,0.81,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
+2026-10-08,Field-101,17.215,76.745,Maize,41,0.75,0.77,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
+2026-10-15,Field-101,17.215,76.745,Maize,24,0.52,0.53,Water Deficit Warning,Soil moisture critical (<25%). Early drought stress detected before leaf withering.,warning
+2026-10-22,Field-101,17.215,76.745,Maize,18,0.4,0.41,Water Deficit Warning,Soil moisture critical (<25%). Early drought stress detected before leaf withering.,warning
+2026-10-01,Field-102,17.222,76.758,Wheat,50,0.85,0.83,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
+2026-10-08,Field-102,17.222,76.758,Wheat,47,0.84,0.84,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
+2026-10-15,Field-102,17.222,76.758,Wheat,45,0.81,0.81,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
+2026-10-22,Field-102,17.222,76.758,Wheat,43,0.78,0.78,Optimal Growth,Crop canopy vigor and soil hydrology are balanced.,success
