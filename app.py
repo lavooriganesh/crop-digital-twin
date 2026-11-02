@@ -20,7 +20,7 @@ st.set_page_config(
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
-    """Loads CSV datasets or fallback data matching the video layout."""
+    """Loads CSV datasets or fallback data matching both fields."""
     truth_path = "ground_truth.csv" if os.path.exists("ground_truth.csv") else ("data/ground_truth.csv" if os.path.exists("data/ground_truth.csv") else None)
     twin_path = "fused_digital_twin_data.csv" if os.path.exists("fused_digital_twin_data.csv") else ("data/fused_digital_twin_data.csv" if os.path.exists("data/fused_digital_twin_data.csv") else None)
 
@@ -32,8 +32,8 @@ def load_datasets():
             "field_id": ["Field-101", "Field-101", "Field-101", "Field-101"],
             "lat": [17.3297, 17.3297, 17.3297, 17.3297],
             "lon": [76.8343, 76.8343, 76.8343, 76.8343],
-            "soil_moisture_pct": [18.0, 24.0, 41.0, 48.0],
-            "scout_vigour": [0.52, 0.65, 0.80, 0.85]
+            "soil_moisture_pct": [18.0, 20.0, 22.0, 18.0],
+            "scout_vigour": [0.45, 0.48, 0.50, 0.52]
         })
 
     if twin_path:
@@ -58,7 +58,7 @@ def load_datasets():
 
 @st.cache_data
 def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
-    """Draws botanical canopy representation."""
+    """Draws botanical canopy representation based on moisture."""
     img_size = (380, 220)
     bg_color = (245, 240, 230) if moisture_pct < 25 else (225, 218, 200)
     img = Image.new("RGB", img_size, color=bg_color)
@@ -68,10 +68,10 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
         draw.line([(0, y), (380, y)], fill=(180, 160, 140), width=3)
         
     if moisture_pct < 25:
-        leaf_color = (180, 160, 50)  
+        leaf_color = (180, 160, 50)  # Stressed yellow/brown
         num_leaves = 6
     else:
-        leaf_color = (34, 139, 34)   
+        leaf_color = (34, 139, 34)   # Healthy green
         num_leaves = 14
 
     for x in range(30, 370, 45):
@@ -90,7 +90,7 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Builds interactive map linking directly to Google Maps as shown in the video."""
+    """Builds interactive map linking directly to Google Maps."""
     m = folium.Map(location=[lat, lon], zoom_start=16, tiles="OpenStreetMap")
     
     folium.TileLayer(
@@ -143,7 +143,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
 # ---------------------------------------------------------
 df_truth, df_twin = load_datasets()
 
-# Sidebar matching video selectors and metadata
 st.sidebar.header("Select a Field")
 field_list = df_twin["field_id"].tolist()
 selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
@@ -158,7 +157,7 @@ st.sidebar.markdown(f"""
 **Longitude:** `{field_data['lon']}`  
 """)
 
-# System Diagnosis & Recommendation Banner matching video
+# System Diagnosis & Recommendation Banner
 st.markdown("### System Diagnosis & Recommendation")
 if field_data["twin_alert_level"] == "warning":
     st.error(f"⚠️ **ACTION NEEDED**: {field_data['twin_status']} ({field_data['twin_recommendation']})")
@@ -167,7 +166,6 @@ else:
 
 st.markdown("---")
 
-# Section 1 & Section 2
 col_left, col_right = st.columns(2)
 
 with col_left:
@@ -216,7 +214,6 @@ with col_right:
 
 st.markdown("---")
 
-# Section 3 & Section 4
 col_canopy, col_table = st.columns(2)
 
 with col_canopy:
