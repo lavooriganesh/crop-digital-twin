@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING (Single 101 and Single 102 entries)
+# DATA LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
@@ -80,18 +80,20 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Builds interactive map linking directly to Google Maps."""
-    m = folium.Map(location=[lat, lon], zoom_start=16, tiles="OpenStreetMap")
+    """Builds interactive real-time Google Satellite map with direct link."""
+    # Initialize map centered on precise coordinates with satellite view as default
+    m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
+    # Real-time Google Satellite Tile Layer
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        attr='Google Satellite',
+        attr='Google Satellite Real-Time',
         name='Google Satellite',
         overlay=False,
         control=True
     ).add_to(m)
     
-    delta = 0.003
+    delta = 0.0015
     coords = [
         [lat - delta, lon - delta],
         [lat - delta, lon + delta],
@@ -100,15 +102,7 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     ]
     
     box_color = "#e53e3e" if moisture < 25 else "#38a169"
-    gmaps_url = f"https://www.google.com/maps/@{lat},{lon},18t/data=!3m1!1e3"
-    
-    popup_html = f"""
-    <b>{field_name} ({crop_name})</b><br>
-    Status: {status}<br>
-    NDVI: {ndvi}<br>
-    Moisture: {moisture}%<br>
-    <a href="{gmaps_url}" target="_blank">Open this exact spot in Google Maps</a>
-    """
+    gmaps_url = f"https://www.google.com/maps/@{lat},{lon},19t/data=!3m1!1e3"
     
     folium.Polygon(
         locations=coords,
@@ -116,8 +110,8 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         weight=3,
         fill=True,
         fill_color=box_color,
-        fill_opacity=0.35,
-        popup=folium.Popup(popup_html, max_width=300)
+        fill_opacity=0.4,
+        popup=f"<b>{field_name} ({crop_name})</b><br>Status: {status}<br>Moisture: {moisture}%"
     ).add_to(m)
     
     folium.Marker(
@@ -126,7 +120,7 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         icon=folium.Icon(color="red" if moisture < 25 else "green", icon="info-sign")
     ).add_to(m)
     
-    return m
+    return m, gmaps_url
 
 # ---------------------------------------------------------
 # INTERFACE LAYOUT
@@ -160,7 +154,8 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {int(field_data['soil_moisture_pct'])}% Green)")
-    folium_map = build_map(
+    
+    folium_map, direct_gmaps_link = build_map(
         lat=float(field_data["lat"]),
         lon=float(field_data["lon"]),
         field_name=field_data["field_id"],
@@ -169,7 +164,11 @@ with col_left:
         moisture=float(field_data["soil_moisture_pct"]),
         ndvi=float(field_data["sat_ndvi"])
     )
-    folium_static(folium_map, width=540, height=320)
+    
+    folium_static(folium_map, width=540, height=310)
+    
+    # Direct button link below map to view live real-time location in Google Maps
+    st.markdown(f"🌍 **[Click here to view this exact field live in real-time on Google Maps]({direct_gmaps_link})**", unsafe_allow_html=True)
 
 with col_right:
     st.markdown("#### 2. Dual Source Time Series Matching")
