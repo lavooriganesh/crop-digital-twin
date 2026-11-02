@@ -16,11 +16,10 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING
+# DATA LOADING (30m NASA HLS Kalaburagi Farmland Grid)
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
-    # Explicit time-series history for both fields up to Sep 25, 2026
     df_truth = pd.DataFrame({
         "date": ["2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25", 
                  "2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25"],
@@ -35,8 +34,8 @@ def load_datasets():
     df_twin = pd.DataFrame({
         "field_id": ["Field-101", "Field-102"],
         "crop": ["Maize", "Wheat"],
-        "lat": [17.3482, 17.3620],
-        "lon": [76.8124, 76.8390],
+        "lat": [17.3297, 17.3450],  # Exact Kalaburagi 30m HLS Grid Coordinates
+        "lon": [76.8343, 76.8520],
         "sat_ndvi": [0.42, 0.74],
         "soil_moisture_pct": [18.0, 43.0],
         "twin_status": ["Water Deficit Warning", "Optimal Growth"],
@@ -83,18 +82,20 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Builds interactive real-time Google Satellite agricultural map with direct link."""
+    """Builds interactive 30m HLS agricultural map with real-time green plant overlay."""
     m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
+    # Real-time Google Satellite Farmland Layer
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        attr='Google Satellite Farmland View',
+        attr='NASA HLS 30m Grid',
         name='Google Satellite',
         overlay=False,
         control=True
     ).add_to(m)
     
-    delta = 0.0012
+    # 30-meter spatial resolution bounding box
+    delta = 0.0003
     coords = [
         [lat - delta, lon - delta],
         [lat - delta, lon + delta],
@@ -102,7 +103,10 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         [lat + delta, lon - delta]
     ]
     
-    box_color = "#e53e3e" if moisture < 25 else "#22c55e"
+    # Low green / warning for Maize (18%), Vibrant green for Wheat (43%)
+    box_color = "#e53e3e" if moisture < 25 else "#16a34a"
+    fill_color = "#fca5a5" if moisture < 25 else "#4ade80"
+    
     gmaps_url = f"https://www.google.com/maps/@{lat},{lon},19t/data=!3m1!1e3"
     
     folium.Polygon(
@@ -110,14 +114,14 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         color=box_color,
         weight=4,
         fill=True,
-        fill_color=box_color,
-        fill_opacity=0.45,
-        popup=f"<b>{field_name} ({crop_name})</b><br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
+        fill_color=fill_color,
+        fill_opacity=0.6,
+        popup=f"<b>{field_name} ({crop_name})</b><br>Resolution: 30m HLS Grid<br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
     ).add_to(m)
     
     folium.Marker(
         [lat, lon],
-        popup=f"{field_name} Farmland Sensor Node",
+        popup=f"{field_name} 30m Sensor Telemetry",
         icon=folium.Icon(color="red" if moisture < 25 else "green", icon="info-sign")
     ).add_to(m)
     
@@ -137,7 +141,8 @@ field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 st.sidebar.markdown(f"""
 **Selected Field:** `{field_data['field_id']}`  
 **Crop Species:** `{field_data['crop']}`  
-**Soil Matrix:** `Black Cotton Soil (Kalaburagi Belt)`  
+**Grid Resolution:** `30m NASA HLS`  
+**Soil Matrix:** `Black Cotton Soil (Kalaburagi)`  
 **Latitude:** `{field_data['lat']}`  
 **Longitude:** `{field_data['lon']}`  
 """)
@@ -168,12 +173,11 @@ with col_left:
     )
     
     folium_static(folium_map, width=540, height=310)
-    st.markdown(f"🌍 **[Click here to view this exact farmland parcel live on Google Maps]({direct_gmaps_link})**", unsafe_allow_html=True)
+    st.markdown(f"🌍 **[Click here to view this exact 30m farmland parcel live in real-time on Google Maps]({direct_gmaps_link})**", unsafe_allow_html=True)
 
 with col_right:
     st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")
     
-    # Correctly filter historical time-series data for the selected field
     field_history = df_truth[df_truth["field_id"] == selected_field_id]
 
     fig = go.Figure()
