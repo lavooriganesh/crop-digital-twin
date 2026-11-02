@@ -16,23 +16,26 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING (Precise Kalaburagi Farmland Coordinates)
+# DATA LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
+    # Explicit time-series history for both fields up to Sep 25, 2026
     df_truth = pd.DataFrame({
-        "date": ["2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25"],
-        "field_id": ["Field-101", "Field-101", "Field-101", "Field-101"],
-        "lat": [17.3482, 17.3482, 17.3482, 17.3482],
-        "lon": [76.8124, 76.8124, 76.8124, 76.8124],
-        "soil_moisture_pct": [19.0, 21.0, 18.0, 18.0],
-        "scout_vigour": [0.50, 0.53, 0.49, 0.52]
+        "date": ["2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25", 
+                 "2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25"],
+        "field_id": ["Field-101", "Field-101", "Field-101", "Field-101", 
+                     "Field-102", "Field-102", "Field-102", "Field-102"],
+        "soil_moisture_pct": [22.0, 20.0, 19.0, 18.0, 
+                              46.0, 45.0, 44.0, 43.0],
+        "scout_vigour": [0.55, 0.53, 0.50, 0.42, 
+                         0.78, 0.76, 0.75, 0.74]
     })
 
     df_twin = pd.DataFrame({
         "field_id": ["Field-101", "Field-102"],
         "crop": ["Maize", "Wheat"],
-        "lat": [17.3482, 17.3620],  # Real agricultural farmland belts in Kalaburagi
+        "lat": [17.3482, 17.3620],
         "lon": [76.8124, 76.8390],
         "sat_ndvi": [0.42, 0.74],
         "soil_moisture_pct": [18.0, 43.0],
@@ -83,7 +86,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     """Builds interactive real-time Google Satellite agricultural map with direct link."""
     m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
-    # Real-time Google Satellite Tile Layer over crop land
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
         attr='Google Satellite Farmland View',
@@ -101,7 +103,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     ]
     
     box_color = "#e53e3e" if moisture < 25 else "#22c55e"
-    # Configured with Sep 25, 2026 temporal anchor timestamp
     gmaps_url = f"https://www.google.com/maps/@{lat},{lon},19t/data=!3m1!1e3"
     
     folium.Polygon(
@@ -167,14 +168,13 @@ with col_left:
     )
     
     folium_static(folium_map, width=540, height=310)
-    
-    # Direct clickable link below map to open exact rural farmland coordinates in Google Maps
     st.markdown(f"🌍 **[Click here to view this exact farmland parcel live on Google Maps]({direct_gmaps_link})**", unsafe_allow_html=True)
 
 with col_right:
     st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")
     
-    field_history = df_truth[df_truth["field_id"] == selected_field_id] if not df_truth.empty else pd.DataFrame()
+    # Correctly filter historical time-series data for the selected field
+    field_history = df_truth[df_truth["field_id"] == selected_field_id]
 
     fig = go.Figure()
     if not field_history.empty:
