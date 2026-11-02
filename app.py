@@ -21,7 +21,6 @@ st.set_page_config(
 @st.cache_data
 def load_datasets():
     """Loads CSV datasets checking both root and data/ directories."""
-    # Resolve Ground Truth file path
     truth_path = None
     if os.path.exists("ground_truth.csv"):
         truth_path = "ground_truth.csv"
@@ -40,7 +39,6 @@ def load_datasets():
             "scout_vigour": [0.85, 0.80, 0.65, 0.52]
         })
 
-    # Resolve Fused Twin file path
     twin_path = None
     if os.path.exists("fused_digital_twin_data.csv"):
         twin_path = "fused_digital_twin_data.csv"
@@ -69,7 +67,7 @@ def load_datasets():
 
 @st.cache_data
 def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
-    """Draws synthetic crop canopy representation without heavy compute."""
+    """Draws synthetic crop canopy representation with safe integer coordinates."""
     img_size = (380, 220)
     bg_color = (245, 240, 230) if moisture_pct < 25 else (225, 218, 200)
     img = Image.new("RGB", img_size, color=bg_color)
@@ -79,7 +77,7 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
     for y in range(20, 220, 40):
         draw.line([(0, y), (380, y)], fill=(180, 160, 140), width=3)
         
-    # Plant foliage color based on NDVI & moisture
+    # Foliage settings
     if moisture_pct < 25:
         leaf_color = (180, 160, 50)  # Dehydration stress
         num_leaves = 6
@@ -92,16 +90,21 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
             for i in range(num_leaves):
                 dx = int(np.sin(i) * 14)
                 dy = int(np.cos(i) * 10)
-                draw.ellipse([x - dx, y - dy, x + dx + 4, y + dy + 4], fill=leaf_color)
+                # Ensure valid box coordinates (x0 < x1 and y0 < y1) using integers
+                x0 = int(x - abs(dx))
+                y0 = int(y - abs(dy))
+                x1 = int(x + abs(dx) + 4)
+                y1 = int(y + abs(dy) + 4)
+                if x1 > x0 and y1 > y0:
+                    draw.ellipse([x0, y0, x1, y1], fill=leaf_color)
                 
     return img
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Caches Folium map generation so the map does not reload on every click."""
+    """Caches Folium map generation."""
     m = folium.Map(location=[lat, lon], zoom_start=15, tiles="OpenStreetMap")
     
-    # Google Satellite layer
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
         attr='Google Satellite',
@@ -110,7 +113,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         control=True
     ).add_to(m)
     
-    # Boundary box
     delta = 0.003
     coords = [
         [lat - delta, lon - delta],
@@ -144,19 +146,15 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
 # ---------------------------------------------------------
 df_truth, df_twin = load_datasets()
 
-# Title
 st.title("🌾 Crop Digital Twin Monitoring System")
 st.caption("Target Region: Kalaburagi, Karnataka | Space-to-Ground Agro-Hydrological Platform")
 
-# Sidebar
 st.sidebar.header("📍 Select Farmland Parcel")
 field_list = df_twin["field_id"].tolist()
 selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
 
-# Selected field data
 field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 
-# Metrics
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Field / Crop", f"{field_data['field_id']} ({field_data['crop']})")
@@ -171,7 +169,6 @@ with col3:
 with col4:
     st.metric("Model Reliability", "99.8%", "Calibrated")
 
-# Alert Banner
 if field_data["twin_alert_level"] == "warning":
     st.error(f"⚠️ **{field_data['twin_status']}**: {field_data['twin_recommendation']}")
 else:
@@ -179,7 +176,6 @@ else:
 
 st.markdown("---")
 
-# Visual Display Section (Map + Canopy)
 col_left, col_right = st.columns([1.2, 0.8])
 
 with col_left:
@@ -210,7 +206,6 @@ with col_right:
 
 st.markdown("---")
 
-# Telemetry Chart
 st.subheader("📈 Ground Truth Moisture vs. Spaceborne NDVI Correlation")
 
 field_history = df_truth[df_truth["field_id"] == selected_field_id]
@@ -252,7 +247,6 @@ if not field_history.empty:
 else:
     st.info("No historical telemetry time-series logs recorded for this parcel yet.")
 
-# Reference Link Section
 with st.expander("🔗 Official State Alignment & Research References"):
     st.markdown("""
     * **State Initiative Alignment:** Supports Karnataka Government's AI-based crop monitoring framework for drought-hit regions.
