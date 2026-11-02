@@ -16,49 +16,39 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING
+# DATA LOADING (Single 101 and Single 102 entries)
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
-    """Loads CSV datasets or fallback data matching both fields."""
-    truth_path = "ground_truth.csv" if os.path.exists("ground_truth.csv") else ("data/ground_truth.csv" if os.path.exists("data/ground_truth.csv") else None)
-    twin_path = "fused_digital_twin_data.csv" if os.path.exists("fused_digital_twin_data.csv") else ("data/fused_digital_twin_data.csv" if os.path.exists("data/fused_digital_twin_data.csv") else None)
+    df_truth = pd.DataFrame({
+        "date": ["2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22"],
+        "field_id": ["Field-101", "Field-101", "Field-101", "Field-101"],
+        "lat": [17.3297, 17.3297, 17.3297, 17.3297],
+        "lon": [76.8343, 76.8343, 76.8343, 76.8343],
+        "soil_moisture_pct": [18.0, 20.0, 22.0, 18.0],
+        "scout_vigour": [0.52, 0.55, 0.58, 0.52]
+    })
 
-    if truth_path:
-        df_truth = pd.read_csv(truth_path)
-    else:
-        df_truth = pd.DataFrame({
-            "date": ["2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22"],
-            "field_id": ["Field-101", "Field-101", "Field-101", "Field-101"],
-            "lat": [17.3297, 17.3297, 17.3297, 17.3297],
-            "lon": [76.8343, 76.8343, 76.8343, 76.8343],
-            "soil_moisture_pct": [18.0, 20.0, 22.0, 18.0],
-            "scout_vigour": [0.45, 0.48, 0.50, 0.52]
-        })
-
-    if twin_path:
-        df_twin = pd.read_csv(twin_path)
-    else:
-        df_twin = pd.DataFrame({
-            "field_id": ["Field-101", "Field-102"],
-            "crop": ["Maize", "Wheat"],
-            "lat": [17.3297, 17.3450],
-            "lon": [76.8343, 76.8520],
-            "sat_ndvi": [0.42, 0.74],
-            "soil_moisture_pct": [18.0, 43.0],
-            "twin_status": ["Water Deficit Warning", "Optimal Growth"],
-            "twin_recommendation": [
-                "Early irrigation required (root-zone stress detected)",
-                "Crop canopy vigor and soil hydrology are balanced"
-            ],
-            "twin_alert_level": ["warning", "success"]
-        })
+    df_twin = pd.DataFrame({
+        "field_id": ["Field-101", "Field-102"],
+        "crop": ["Maize", "Wheat"],
+        "lat": [17.3297, 17.3450],
+        "lon": [76.8343, 76.8520],
+        "sat_ndvi": [0.42, 0.74],
+        "soil_moisture_pct": [18.0, 43.0],
+        "twin_status": ["Water Deficit Warning", "Optimal Growth"],
+        "twin_recommendation": [
+            "Early irrigation required (root-zone stress detected)",
+            "Crop canopy vigor and soil hydrology are balanced"
+        ],
+        "twin_alert_level": ["warning", "success"]
+    })
     
     return df_truth, df_twin
 
 @st.cache_data
 def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
-    """Draws botanical canopy representation based on moisture."""
+    """Draws botanical canopy representation."""
     img_size = (380, 220)
     bg_color = (245, 240, 230) if moisture_pct < 25 else (225, 218, 200)
     img = Image.new("RGB", img_size, color=bg_color)
@@ -68,10 +58,10 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
         draw.line([(0, y), (380, y)], fill=(180, 160, 140), width=3)
         
     if moisture_pct < 25:
-        leaf_color = (180, 160, 50)  # Stressed yellow/brown
+        leaf_color = (180, 160, 50)  
         num_leaves = 6
     else:
-        leaf_color = (34, 139, 34)   # Healthy green
+        leaf_color = (34, 139, 34)   
         num_leaves = 14
 
     for x in range(30, 370, 45):
