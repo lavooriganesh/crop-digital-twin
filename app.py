@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING (Pure Rural Forest & Farmland Green Belts)
+# DATA LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
@@ -34,7 +34,7 @@ def load_datasets():
     df_twin = pd.DataFrame({
         "field_id": ["Field-101", "Field-102"],
         "crop": ["Maize", "Wheat"],
-        "lat": [17.1855, 17.2140],  # Deep rural green forest and crop belts in Kalaburagi
+        "lat": [17.1855, 17.2140],
         "lon": [76.9420, 76.9880],
         "sat_ndvi": [0.42, 0.74],
         "soil_moisture_pct": [18.0, 43.0],
@@ -85,7 +85,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     """Builds interactive green forest and crop belt satellite map."""
     m = folium.Map(location=[lat, lon], zoom_start=17, tiles=None)
     
-    # Real-time Google Satellite Farmland & Forest View
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
         attr='Google Satellite Forest & Crop Belt',
@@ -102,11 +101,11 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         [lat + delta, lon - delta]
     ]
     
-    # Maize (18% moisture) vs Wheat (43% moisture) styling
     box_color = "#e53e3e" if moisture < 25 else "#16a34a"
     fill_color = "#fca5a5" if moisture < 25 else "#22c55e"
     
-    gmaps_url = f"https://www.google.com/maps/@{lat},{lon},18t/data=!3m1!1e3"
+    # Direct Google Maps URL forcing satellite mode (`@lat,lon,18z/data=!3m1!1e3`)
+    gmaps_url = f"https://www.google.com/maps/@{lat},{lon},18z/data=!3m1!1e3"
     
     folium.Polygon(
         locations=coords,
@@ -171,7 +170,9 @@ with col_left:
     )
     
     folium_static(folium_map, width=540, height=310)
-    st.markdown(f"🌍 **[Click here to view this lush green forest & crop area live in real-time on Google Maps]({direct_gmaps_link})**", unsafe_allow_html=True)
+    
+    # Direct clickable link right below the map
+    st.markdown(f"🌍 **[Click here to view this exact field live on Google Maps in Satellite View]({direct_gmaps_link})**", unsafe_allow_html=True)
 
 with col_right:
     st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")
