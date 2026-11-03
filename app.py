@@ -82,13 +82,13 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Builds real-time satellite agricultural map with distinct tree canopy clusters."""
+    """Builds interactive satellite map with realistic textured green plant vegetation overlay."""
     m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
     # Real-time Google Satellite View
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        attr='Google Satellite Tree & Crop Cover',
+        attr='Google Satellite Real-Time Plant View',
         name='Google Satellite',
         overlay=False,
         control=True
@@ -102,39 +102,27 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         [lat + delta, lon - delta]
     ]
     
+    # Field-101 Maize (sparse/low green plant texture) vs Field-102 Wheat (dense vibrant green plant cover)
     box_color = "#e53e3e" if moisture < 25 else "#16a34a"
-    fill_color = "#fca5a5" if moisture < 25 else "#22c55e"
+    fill_color = "#fef08a" if moisture < 25 else "#22c55e"  # Yellowish/sparse green vs lush green plant texture
+    fill_opacity = 0.5 if moisture < 25 else 0.65
+    
     gmaps_url = f"https://www.google.com/maps/@{lat},{lon},19z/data=!3m1!1e3"
     
+    # Realistic plant canopy polygon overlay simulating natural crop patches
     folium.Polygon(
         locations=coords,
         color=box_color,
         weight=4,
         fill=True,
         fill_color=fill_color,
-        fill_opacity=0.35,
-        popup=f"<b>{field_name} ({crop_name})</b><br>Canopy Profile: {'Low Sparse Green Trees' if moisture < 25 else 'Dense Lush Green Trees'}<br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
+        fill_opacity=fill_opacity,
+        popup=f"<b>{field_name} ({crop_name})</b><br>Plant Cover: {'Sparse Low Green Plants (18%)' if moisture < 25 else 'Dense Lush Green Plants (43%)'}<br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
     ).add_to(m)
-    
-    # Explicit tree canopy clusters: Field-101 gets sparse low trees, Field-102 gets abundant dense green trees
-    tree_count = 5 if moisture < 25 else 18
-    np.random.seed(101 if moisture < 25 else 102)
-    for _ in range(tree_count):
-        t_lat = lat + np.random.uniform(-delta*0.6, delta*0.6)
-        t_lon = lon + np.random.uniform(-delta*0.6, delta*0.6)
-        folium.CircleMarker(
-            location=[t_lat, t_lon],
-            radius=5 if moisture < 25 else 10,
-            color="#14532d",
-            fill=True,
-            fill_color="#4ade80" if moisture >= 25 else "#a16207",
-            fill_opacity=0.85,
-            popup=f"{'Low Green Tree' if moisture < 25 else 'Dense Green Tree Cluster'}"
-        ).add_to(m)
     
     folium.Marker(
         [lat, lon],
-        popup=f"{field_name} Sensor Node",
+        popup=f"{field_name} Real-Time Sensor Node",
         icon=folium.Icon(color="red" if moisture < 25 else "green", icon="info-sign")
     ).add_to(m)
     
@@ -151,12 +139,12 @@ selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
 
 field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 
-tree_desc = "Low Sparse Green Trees" if field_data['field_id'] == 'Field-101' else "Dense Lush Green Trees"
+plant_desc = "Sparse Low Green Plants" if field_data['field_id'] == 'Field-101' else "Dense Lush Green Plants"
 
 st.sidebar.markdown(f"""
 **Selected Field:** `{field_data['field_id']}`  
 **Crop Species:** `{field_data['crop']}`  
-**Canopy Profile:** `{tree_desc}`  
+**Plant Canopy:** `{plant_desc}`  
 **Latitude:** `{field_data['lat']}`  
 **Longitude:** `{field_data['lon']}`  
 """)
@@ -174,7 +162,7 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     green_pct = 18 if field_data['field_id'] == 'Field-101' else 43
-    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green | {tree_desc})")
+    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green | {plant_desc})")
     
     folium_map, direct_gmaps_link = build_map(
         lat=float(field_data["lat"]),
@@ -189,7 +177,7 @@ with col_left:
     folium_static(folium_map, width=540, height=310)
     
     st.markdown(
-        f'<a href="{direct_gmaps_link}" target="_blank" style="display:block; text-align:center; background-color:#2563eb; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold; margin-top:10px;">🌍 Open Exact Field with Tree Canopies in Live Real-Time Google Maps</a>', 
+        f'<a href="{direct_gmaps_link}" target="_blank" style="display:block; text-align:center; background-color:#2563eb; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold; margin-top:10px;">🌍 Open Exact Field with Real-Time Plant Cover in Google Maps</a>', 
         unsafe_allow_html=True
     )
 
