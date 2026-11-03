@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# DATA LOADING (Verified Pure Agricultural Green Belts)
+# DATA LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_datasets():
@@ -34,7 +34,7 @@ def load_datasets():
     df_twin = pd.DataFrame({
         "field_id": ["Field-101", "Field-102"],
         "crop": ["Maize", "Wheat"],
-        "lat": [17.2750, 17.3120],  # Verified open green farmland belt coordinates away from buildings
+        "lat": [17.2750, 17.3120],  # Open green agricultural farm belts
         "lon": [76.7840, 76.8150],
         "sat_ndvi": [0.42, 0.74],
         "soil_moisture_pct": [18.0, 43.0],
@@ -82,7 +82,7 @@ def generate_botanical_canopy(crop_type, moisture_pct, ndvi_val):
 
 @st.cache_data
 def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
-    """Builds interactive open green farmland satellite map."""
+    """Builds interactive open green farmland satellite map with precise greenness styling."""
     m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
     # Real-time Google Satellite Farmland View
@@ -102,8 +102,11 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         [lat + delta, lon - delta]
     ]
     
+    # Field-101 (Maize) gets sparse yellow/green tint; Field-102 (Wheat) gets deep, lush vibrant green plant cover
     box_color = "#e53e3e" if moisture < 25 else "#16a34a"
-    fill_color = "#fef08a" if moisture < 25 else "#22c55e"
+    fill_color = "#fef08a" if moisture < 25 else "#15803d"
+    fill_opacity = 0.4 if moisture < 25 else 0.65
+    
     gmaps_url = f"https://www.google.com/maps/@{lat},{lon},19z/data=!3m1!1e3"
     
     folium.Polygon(
@@ -112,7 +115,7 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         weight=4,
         fill=True,
         fill_color=fill_color,
-        fill_opacity=0.4,
+        fill_opacity=fill_opacity,
         popup=f"<b>{field_name} ({crop_name})</b><br>Zone: Open Green Farmland<br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
     ).add_to(m)
     
@@ -135,12 +138,12 @@ selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
 
 field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 
-plant_desc = "Sparse Green Rows (18%)" if field_data['field_id'] == 'Field-101' else "Dense Green Rows (43%)"
+green_pct_label = "18% Green (Needs Water)" if field_data['field_id'] == 'Field-101' else "43% Green (Optimal Growth / More Green)"
 
 st.sidebar.markdown(f"""
 **Selected Field:** `{field_data['field_id']}`  
 **Crop Species:** `{field_data['crop']}`  
-**Canopy Profile:** `{plant_desc}`  
+**Canopy Profile:** `{green_pct_label}`  
 **Latitude:** `{field_data['lat']}`  
 **Longitude:** `{field_data['lon']}`  
 """)
@@ -173,7 +176,7 @@ with col_left:
     folium_static(folium_map, width=540, height=310)
     
     st.markdown(
-        f'<a href="{direct_gmaps_link}" target="_blank" style="display:block; text-align:center; background-color:#2563eb; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold; margin-top:10px;">🌍 Open Exact Open Green Field in Live Real-Time Google Maps</a>', 
+        f'<a href="{direct_gmaps_link}" target="_blank" style="display:block; text-align:center; background-color:#2563eb; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold; margin-top:10px;">🌍 Open Exact Field in Live Real-Time Google Maps</a>', 
         unsafe_allow_html=True
     )
 
