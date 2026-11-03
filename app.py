@@ -104,7 +104,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     box_color = "#e53e3e" if moisture < 25 else "#16a34a"
     fill_color = "#fca5a5" if moisture < 25 else "#22c55e"
     
-    # Direct Google Maps satellite URL matching your inspected view
     gmaps_url = f"https://www.google.com/maps/@{lat},{lon},18z/data=!3m1!1e3"
     
     folium.Polygon(
@@ -137,11 +136,11 @@ selected_field_id = st.sidebar.selectbox("Choose Field", field_list, index=0)
 field_data = df_twin[df_twin["field_id"] == selected_field_id].iloc[0]
 
 st.sidebar.markdown(f"""
-**Selected Field:** `{field_data['field_id']}`[cite: 1, 2]  
-**Crop Species:** `{field_data['crop']}`[cite: 1, 2]  
-**Terrain:** `Rural Green Forest & Crop Belt`[cite: 1, 2]  
-**Latitude:** `{field_data['lat']}`[cite: 1, 2]  
-**Longitude:** `{field_data['lon']}`[cite: 1, 2]  
+**Selected Field:** `{field_data['field_id']}`  
+**Crop Species:** `{field_data['crop']}`  
+**Terrain:** `Rural Green Forest & Crop Belt`  
+**Latitude:** `{field_data['lat']}`  
+**Longitude:** `{field_data['lon']}`  
 """)
 
 # System Diagnosis & Recommendation Banner
@@ -157,7 +156,7 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     green_pct = 18 if field_data['field_id'] == 'Field-101' else 43
-    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green)")[cite: 1, 2]
+    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green)")
     
     folium_map, direct_gmaps_link = build_map(
         lat=float(field_data["lat"]),
@@ -171,14 +170,13 @@ with col_left:
     
     folium_static(folium_map, width=540, height=310)
     
-    # Styled button linking directly to the real-time Google Maps satellite location
     st.markdown(
         f'<a href="{direct_gmaps_link}" target="_blank" style="display:block; text-align:center; background-color:#2563eb; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold; margin-top:10px;">🌍 Open Exact Field in Live Real-Time Google Maps</a>', 
         unsafe_allow_html=True
     )
 
 with col_right:
-    st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")[cite: 1, 2]
+    st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")
     
     field_history = df_truth[df_truth["field_id"] == selected_field_id]
 
@@ -213,7 +211,7 @@ st.markdown("---")
 col_canopy, col_table = st.columns(2)
 
 with col_canopy:
-    st.markdown("#### 3. NASA HLS Satellite NDVI Heatmap (Sep 25)")[cite: 1, 2]
+    st.markdown("#### 3. NASA HLS Satellite NDVI Heatmap (Sep 25)")
     if os.path.exists("data/ndvi_preview.png"):
         st.image("data/ndvi_preview.png", caption="NASA HLS Satellite NDVI Heatmap", use_container_width=True)
     else:
@@ -225,7 +223,7 @@ with col_canopy:
         st.image(canopy_img, caption=f"Simulated Canopy Structure for {field_data['field_id']}", use_container_width=True)
 
 with col_table:
-    st.markdown("#### 4. Field Observations & Twin State Log")[cite: 1, 2]
+    st.markdown("#### 4. Field Observations & Twin State Log")
     log_df = pd.DataFrame({
         "Date": ["2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25"],
         "Parcel": [field_data["field_id"]]*4,
