@@ -34,7 +34,7 @@ def load_datasets():
     df_twin = pd.DataFrame({
         "field_id": ["Field-101", "Field-102"],
         "crop": ["Maize", "Wheat"],
-        "lat": [17.2750, 17.2768],  # Adjacent open green agricultural plots in Kalaburagi
+        "lat": [17.2750, 17.2768],
         "lon": [76.7840, 76.7868],
         "sat_ndvi": [0.42, 0.74],
         "soil_moisture_pct": [18.0, 43.0],
@@ -85,7 +85,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     """Builds interactive open green farmland satellite map with enhanced plant layers."""
     m = folium.Map(location=[lat, lon], zoom_start=18, tiles=None)
     
-    # Real-time Google Satellite Farmland View
     folium.TileLayer(
         tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
         attr='Google Satellite Open Green Farmland',
@@ -103,7 +102,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
     ]
     
     box_color = "#e53e3e" if moisture < 25 else "#16a34a"
-    # Field-101 gets a lighter/sparse plant tint; Field-102 gets a rich, dense green plant layer
     fill_color = "#fef08a" if moisture < 25 else "#14532d"
     fill_opacity = 0.4 if moisture < 25 else 0.7
     
@@ -119,7 +117,6 @@ def build_map(lat, lon, field_name, crop_name, status, moisture, ndvi):
         popup=f"<b>{field_name} ({crop_name})</b><br>Zone: Open Green Farmland<br>Date: Sep 25, 2026<br>Status: {status}<br>Moisture: {moisture}%"
     ).add_to(m)
     
-    # Add dense realistic plant cluster markers for Field-102 to visually emphasize "more plants / more green"
     if moisture >= 25:
         np.random.seed(2026)
         for _ in range(8):
@@ -158,10 +155,10 @@ green_pct_label = "18% Green (Maize / Sparse)" if field_data['field_id'] == 'Fie
 
 st.sidebar.markdown(f"""
 **Selected Field:** `{field_data['field_id']}`  
-**Crop Species:** `{field_data['crop']}`[cite: 1, 2]  
-**Canopy Profile:** `{green_pct_label}`[cite: 1, 2]  
-**Latitude:** `{field_data['lat']}`[cite: 1, 2]  
-**Longitude:** `{field_data['lon']}`[cite: 1, 2]  
+**Crop Species:** `{field_data['crop']}`  
+**Canopy Profile:** `{green_pct_label}`  
+**Latitude:** `{field_data['lat']}`  
+**Longitude:** `{field_data['lon']}`  
 """)
 
 # System Diagnosis & Recommendation Banner
@@ -177,7 +174,7 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     green_pct = 18 if field_data['field_id'] == 'Field-101' else 43
-    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green)")[cite: 1, 2]
+    st.markdown(f"#### 1. Field Location Map ({field_data['field_id']} - {field_data['crop']} Rows: {green_pct}% Green)")
     
     folium_map, direct_gmaps_link = build_map(
         lat=float(field_data["lat"]),
@@ -197,7 +194,7 @@ with col_left:
     )
 
 with col_right:
-    st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")[cite: 1, 2]
+    st.markdown("#### 2. Dual Source Time Series Matching (Sep, 2026)")
     
     field_history = df_truth[df_truth["field_id"] == selected_field_id]
 
@@ -232,7 +229,7 @@ st.markdown("---")
 col_canopy, col_table = st.columns(2)
 
 with col_canopy:
-    st.markdown("#### 3. NASA HLS Satellite NDVI Heatmap (Sep 25)")[cite: 1, 2]
+    st.markdown("#### 3. NASA HLS Satellite NDVI Heatmap (Sep 25)")
     if os.path.exists("data/ndvi_preview.png"):
         st.image("data/ndvi_preview.png", caption="NASA HLS Satellite NDVI Heatmap", use_container_width=True)
     else:
@@ -244,7 +241,7 @@ with col_canopy:
         st.image(canopy_img, caption=f"Simulated Canopy Structure for {field_data['field_id']}", use_container_width=True)
 
 with col_table:
-    st.markdown("#### 4. Field Observations & Twin State Log")[cite: 1, 2]
+    st.markdown("#### 4. Field Observations & Twin State Log")
     log_df = pd.DataFrame({
         "Date": ["2026-09-04", "2026-09-11", "2026-09-18", "2026-09-25"],
         "Parcel": [field_data["field_id"]]*4,
