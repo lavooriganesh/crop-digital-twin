@@ -1,9 +1,9 @@
-date,field_id,lat,lon,crop,soil_moisture_pct,scout_vigour
-2026-03-01,Field-101,17.2785,76.8125,Maize,48,0.80
-2026-03-15,Field-101,17.2785,76.8125,Maize,42,0.76
-2026-03-30,Field-101,17.2785,76.8125,Maize,22,0.52
-2026-04-10,Field-101,17.2785,76.8125,Maize,18,0.40
-2026-03-01,Field-102,17.2840,76.8260,Wheat,50,0.85
-2026-03-15,Field-102,17.2840,76.8260,Wheat,47,0.84
-2026-03-30,Field-102,17.2840,76.8260,Wheat,45,0.82
-2026-04-10,Field-102,17.2840,76.8260,Wheat,43,0.79
+echo date,field_id,lat,lon,crop,soil_moisture_pct,scout_vigour > ground_truth.csv
+echo 2026-10-01,Field-101,17.2150,76.7450,Maize,48,0.80 >> ground_truth.csv
+echo 2026-10-08,Field-101,17.2150,76.7450,Maize,41,0.75 >> ground_truth.csv
+echo 2026-10-15,Field-101,17.2150,76.7450,Maize,24,0.52 >> ground_truth.csv
+echo 2026-10-22,Field-101,17.2150,76.7450,Maize,18,0.40 >> ground_truth.csv
+echo 2026-10-01,Field-102,17.2220,76.7580,Wheat,50,0.85 >> ground_truth.csv
+echo 2026-10-08,Field-102,17.2220,76.7580,Wheat,47,0.84 >> ground_truth.csv
+echo 2026-10-15,Field-102,17.2220,76.7580,Wheat,45,0.81 >> ground_truth.csv
+echo 2026-10-22,Field-102,17.2220,76.7580,Wheat,43,0.78 >> ground_truth.csv
