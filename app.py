@@ -34,7 +34,6 @@ def load_datasets():
     if os.path.exists("ground_truth.csv"):
         try:
             df_truth = pd.read_csv("ground_truth.csv")
-            # Strip whitespace from column names if any exist
             df_truth.columns = df_truth.columns.str.strip()
             if not {"date", "field_id", "soil_moisture_pct", "scout_vigour"}.issubset(df_truth.columns):
                 df_truth = default_truth
